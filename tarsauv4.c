@@ -99,6 +99,9 @@ int main(int argc, char **argv)
         int filepermission, headersize, filesize;
         long location;
 
+        char lastTerm[50];
+        strcpy(lastTerm, "");
+
         // Start to read until end of the file continue loop.
         // Move the file position indicator 10 bytes ahead in the archive.
 
@@ -137,9 +140,14 @@ int main(int argc, char **argv)
             fclose(file);
             chmod(fullpath, filepermission);
             fseek(arch, location, SEEK_SET);
+
+
+            strcat(lastTerm, filename);
+            strcat(lastTerm, " ");
+
         }
 
-        printf("t1, t2, t3, t4.txt t5.dat files  opened in the %s directory.\n", directory);
+        printf("%s files  opened in the %s directory.\n", lastTerm, directory);
 
     }
 
