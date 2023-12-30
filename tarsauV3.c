@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <fstab.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define MAX_FILES 32                    // 32 files
 #define MAX_FILE_SIZE 200 * 1024 * 1024 // 200 MB
@@ -91,19 +91,19 @@ int main(int argc, char **argv)
         }
 
         char filename[100];
-        int filepermission, headersize,filesize;
+        int filepermission, headersize, filesize;
         long location;
 
-        // Start to read until end of the file continue loop. 
+        // Start to read until end of the file continue loop.
         // Move the file position indicator 10 bytes ahead in the archive.
 
         fscanf(arch, " %d", &headersize);
-        fseek(arch,10,SEEK_SET);
-        int i = 0,addition;
+        fseek(arch, 10, SEEK_SET);
+        int i = 0, addition;
         while (fscanf(arch, "|%[^,],%o,%d|", filename, &filepermission, &filesize) == 3)
         {
             printf("%s", filename);
-            
+
             // Create the full path for the file in the specified directory
             char fullpath[256];
             snprintf(fullpath, sizeof(fullpath), "%s/%s", directory, filename);
@@ -114,27 +114,30 @@ int main(int argc, char **argv)
                 exit(1);
             }
 
-            location= ftell(arch);
-            if (i == 0){
+            location = ftell(arch);
+            if (i == 0)
+            {
                 addition = headersize;
                 i++;
             }
 
             // Copy the contents of the file from the archive to the newly created file
-            fseek(arch,addition,SEEK_SET);
+            fseek(arch, addition, SEEK_SET);
             for (int i = 0; i < filesize; i++)
             {
                 c = fgetc(arch);
-                fputc(c, file);
+                (c == '\n') ?: fputc(c, file);
             }
 
             // Restore the file position in the archive for the next iteration
-            addition= ftell(arch);
+            addition = ftell(arch);
             fclose(file);
             chmod(fullpath, filepermission);
-            fseek(arch,location,SEEK_SET);
+            fseek(arch, location, SEEK_SET);
         }
+
         printf("t1, t2, t3, t4.txt t5.dat files  opened in the %s directory.\n", directory);
+
     }
 
     // Logic of condition will play a role according to argument using operationType variable.
@@ -147,8 +150,7 @@ int main(int argc, char **argv)
         int exists;
         char *fileName;
 
-
-        //Check the command line second argument which will be archieved file name
+        // Check the command line second argument which will be archieved file name
 
         for (i = 1; i < argc; i++)
         {
@@ -176,9 +178,8 @@ int main(int argc, char **argv)
             exit(1);
         }
 
-            
-        //The first 10 bytes hold the numerical size of the first section
-        //Write metadata to the archive like |filename, permission mode, file size|
+        // The first 10 bytes hold the numerical size of the first section
+        // Write metadata to the archive like |filename, permission mode, file size|
 
         fseek(output_file, 10, SEEK_SET);
         for (i = 2; i < argc; i++)
@@ -197,13 +198,12 @@ int main(int argc, char **argv)
             exit(1);
         }
 
-
         // Move the file position indicator in the output file to the position.
         fseek(output_file, headersize + 1, SEEK_SET);
         char *tmp;
 
-        //Get into the files which was given as argument on command line.
-        // which represent the paths of the archieve file and output directory   
+        // Get into the files which was given as argument on command line.
+        //  which represent the paths of the archieve file and output directory
         for (i = 2; i < argc; i++)
         {
             exists = stat(argv[i], &buf);
@@ -220,8 +220,19 @@ int main(int argc, char **argv)
 
                 // Read the contents of the file into the temporary buffer
                 size = fread(tmp, 1, buf.st_size, argument);
+                printf("size:%ld\n", size);
                 if (size > 0)
                 {
+                    for (int j = 0; j < strlen(tmp); j++)       
+                    {   // Checking if there is incompatible file format
+                        printf("%c",tmp[j]);
+                        if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
+                        {
+                            fprintf(stderr, "Incompatible input file format: %s\n",argv[i]);
+                            fclose(argument);
+                            exit(1);
+                        }
+                    }
                     // Write the contents of the temporary buffer to the output file
                     fwrite(tmp, 1, buf.st_size, output_file);
                     size = fread(tmp, 1, buf.st_size, argument);
@@ -231,6 +242,7 @@ int main(int argc, char **argv)
             }
         }
         fclose(output_file);
+
         printf("The files have been merged.\n");
     }
     return 0;
