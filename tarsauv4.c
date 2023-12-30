@@ -102,8 +102,6 @@ int main(int argc, char **argv)
         int i = 0, addition;
         while (fscanf(arch, "|%[^,],%o,%d|", filename, &filepermission, &filesize) == 3)
         {
-            printf("%s", filename);
-
             // Create the full path for the file in the specified directory
             char fullpath[256];
             snprintf(fullpath, sizeof(fullpath), "%s/%s", directory, filename);
@@ -126,7 +124,7 @@ int main(int argc, char **argv)
             for (int i = 0; i < filesize; i++)
             {
                 c = fgetc(arch);
-                (c == '\n') ?: fputc(c, file);
+                if(c == '\n'){} else{fputc(c, file);}
             }
 
             // Restore the file position in the archive for the next iteration
@@ -220,7 +218,7 @@ int main(int argc, char **argv)
                 printf("size:%ld\n", size);
                 if (size > 0)
                 {
-                    for (int j = 0; j < strlen(tmp); j++)       
+                    for (int j = 0; j < size; j++)       
                     {   // Checking if there is incompatible file format
                         printf("%c",tmp[j]);
                         if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
