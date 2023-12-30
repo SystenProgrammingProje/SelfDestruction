@@ -51,26 +51,25 @@ int main(int argc, char **argv)
 
     if (operationType == 0)
     { // tarsau -a
-        printf("tarsau -a\n");
         FILE *arch, *file;
         DIR *dir;
         char *archive = argv[2];
         char *directory;
         char c;
-        if (argv[3] == NULL){
+        if (argv[3] == NULL)
+        {
             directory = ".";
         }
-        else{
+        else
+        {
             directory = argv[3];
         }
         // Going over the output directory if it does not exist create the particular directory which was given argument by user
         dir = opendir(directory);
         if (dir == NULL)
         {
-            printf("Failed to open directory.\n");
             if (ENOENT == errno)
             {
-                printf("Directory does not exist. Creating directory.\n");
                 mkdir(directory, 0700);
             }
             else
@@ -82,7 +81,6 @@ int main(int argc, char **argv)
         }
         else
         {
-            printf("Directory exists. Proceeding with the operation.\n");
             closedir(dir);
         }
 
@@ -129,7 +127,13 @@ int main(int argc, char **argv)
             for (int i = 0; i < filesize; i++)
             {
                 c = fgetc(arch);
-                if(c == '\n'){} else{fputc(c, file);}
+                if (c == '\n')
+                {
+                }
+                else
+                {
+                    fputc(c, file);
+                }
             }
 
             // Restore the file position in the archive for the next iteration
@@ -168,8 +172,6 @@ int main(int argc, char **argv)
         }
 
         // Create a archieve file and control the file arguments is there any problem about file number or file size
-
-        printf("tarsau -b\n");
         output_file = fopen(fileName, "w+");
         long headersize = 0;
         if (argc - 2 > MAX_FILES)
@@ -192,53 +194,53 @@ int main(int argc, char **argv)
         rewind(output_file);
         fprintf(output_file, "%-10ld", headersize);
 
-        if (headersize > MAX_FILE_SIZE)
-        { // The total size of input files cannot exceed 200 MBytes.
-            fprintf(stderr, "Exceeded max file size:200MB");
-            exit(1);
-        }
-
         // Move the file position indicator in the output file to the position.
         fseek(output_file, headersize, SEEK_SET);
         char *tmp;
 
         // Get into the files which was given as argument on command line.
         //  which represent the paths of the archieve file and output directory
+        long totalsize = 0;
         for (i = 2; i < argc; i++)
         {
             exists = stat(argv[i], &buf);
             if (exists < 0)
             {
                 fprintf(stderr, "%s not found\n", argv[i]);
+                exit(1);
             }
-            else
+            totalsize+=buf.st_size;
+            if (totalsize > MAX_FILE_SIZE)
+            { // The total size of input files cannot exceed 200 MBytes.
+                fprintf(stderr, "Exceeded max file size:200MB\n");
+                exit(1);
+            }
+            argument = fopen(argv[i], "r");
+
+            // Allocate memory for the temporary buffer based on the file size
+            tmp = malloc(buf.st_size);
+
+            // Read the contents of the file into the temporary buffer
+            size = fread(tmp, 1, buf.st_size, argument);
+            if (size > 0)
             {
-                argument = fopen(argv[i], "r");
-
-                // Allocate memory for the temporary buffer based on the file size
-                tmp = malloc(buf.st_size);
-
-                // Read the contents of the file into the temporary buffer
-                size = fread(tmp, 1, buf.st_size, argument);
-                if (size > 0)
-                {
-                    for (int j = 0; j < size; j++)       
-                    {   // Checking if there is incompatible file format
-                        if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
-                        {
-                            fprintf(stderr, "Incompatible input file format: %s\n",argv[i]);
-                            fclose(argument);
-                            exit(1);
-                        }
+                for (int j = 0; j < size; j++)
+                { // Checking if there is incompatible file format
+                    if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
+                    {
+                        fprintf(stderr, "Incompatible input file format: %s\n", argv[i]);
+                        fclose(argument);
+                        exit(1);
                     }
-                    // Write the contents of the temporary buffer to the output file
-                    fwrite(tmp, 1, buf.st_size, output_file);
-                    size = fread(tmp, 1, buf.st_size, argument);
                 }
-                free(tmp);
-                fclose(argument);
+                // Write the contents of the temporary buffer to the output file
+                fwrite(tmp, 1, buf.st_size, output_file);
+                size = fread(tmp, 1, buf.st_size, argument);
             }
+            free(tmp);
+            fclose(argument);
         }
+        printf("The files have been merged.");
         fclose(output_file);
     }
     return 0;
