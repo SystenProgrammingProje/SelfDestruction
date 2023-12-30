@@ -7,7 +7,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <ctype.h>
-
+// Constraints defined
 #define MAX_FILES 32                    // 32 files
 #define MAX_FILE_SIZE 200 * 1024 * 1024 // 200 MB
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
             printf("Usage: %s -a archive.sau directory\n", argv[0]);
             exit(1);
         }
-        if (strstr(argv[2], ".sau") == NULL)
+        if (strstr(argv[2], ".sau") == NULL)        // If the extension is not .sau, it gives error.
         {
             printf("Archive file is inappropriate or corrupt!\n");
             exit(1);
@@ -48,23 +48,23 @@ int main(int argc, char **argv)
         printf("Invalid option: %s\n", argv[1]);
         exit(1);
     }
-
+    // Logic of condition will play a role according to argument using operationType variable.
     if (operationType == 0)
     { // tarsau -a
-        FILE *arch, *file;
+        FILE *arch, *file;              // Declaring necessary variables.
         DIR *dir;
         char *archive = argv[2];
         char *directory;
         char c;
-        if (argv[3] == NULL)
-        {
+        if (argv[3] == NULL)            // If there is no directory parameter send,
+        {                               // current directory is set.
             directory = ".";
         }
         else
         {
             directory = argv[3];
         }
-        // Going over the output directory if it does not exist create the particular directory which was given argument by user
+        // Going over the output directory if it does not exist create the particular directory which was given argument by user.
         dir = opendir(directory);
         if (dir == NULL)
         {
@@ -103,6 +103,7 @@ int main(int argc, char **argv)
         fscanf(arch, " %d", &headersize);
         fseek(arch, 10, SEEK_SET);
         int i = 0, addition;
+        // Get the file informations to recreate the files.
         while (fscanf(arch, "|%[^,],%o,%d|", filename, &filepermission, &filesize) == 3)
         {
             // Create the full path for the file in the specified directory
@@ -114,7 +115,7 @@ int main(int argc, char **argv)
                 printf("Cannot open file %s for writing.\n", fullpath);
                 exit(1);
             }
-
+            // Save the location of the file pointer in order to read next file info.
             location = ftell(arch);
             if (i == 0)
             {
@@ -136,7 +137,7 @@ int main(int argc, char **argv)
                 }
             }
 
-            // Restore the file position in the archive for the next iteration
+            // Save the file pointer location to read the next file content.
             addition = ftell(arch);
             fclose(file);
             chmod(fullpath, filepermission);
@@ -145,17 +146,16 @@ int main(int argc, char **argv)
         }
         printf("files opened in the %s directory.\n",directory);
     }
-    // Logic of condition will play a role according to argument using operationType variable.
-
+   
     if (operationType == 1)
     { // tarsau -b
-        FILE *output_file, *argument, *temp;
+        FILE *output_file, *argument, *temp;        // Declaring necessary variables
         ssize_t size;
         struct stat buf;
         int exists;
         char *fileName;
 
-        // Check the command line second argument which will be archieved file name
+        // Checking the command line second argument which will be archieved file name
 
         for (i = 1; i < argc; i++)
         {
@@ -167,12 +167,12 @@ int main(int argc, char **argv)
                 break;
             }
             else
-            {
+            {   // If there is no archive name is sent, a.sau is the name.
                 fileName = "a.sau";
             }
         }
 
-        // Create a archieve file and control the file arguments is there any problem about file number or file size
+        // Create a archieve file and control the file arguments if there any problem about file number.
         output_file = fopen(fileName, "w+");
         long headersize = 0;
         if (argc - 2 > MAX_FILES)
@@ -193,14 +193,13 @@ int main(int argc, char **argv)
         headersize += 11;
         fprintf(output_file, "\n");
         rewind(output_file);
-        fprintf(output_file, "%-10ld", headersize);
+        fprintf(output_file, "%-10ld", headersize); // Printing header size
 
-        // Move the file position indicator in the output file to the position.
+        // Move the file position indicator in the output file after file info header.
         fseek(output_file, headersize, SEEK_SET);
         char *tmp;
 
-        // Get into the files which was given as argument on command line.
-        //  which represent the paths of the archieve file and output directory
+        // Read the files which was given as argument on command line.
         long totalsize = 0;
         for (i = 2; i < argc; i++)
         {
