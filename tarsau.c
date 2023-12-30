@@ -240,7 +240,7 @@ int main(int argc, char **argv)
             free(tmp);
             fclose(argument);
         }
-        printf("The files have been merged.");
+        printf("The files have been merged.\n");
         fclose(output_file);
     }
     return 0;
