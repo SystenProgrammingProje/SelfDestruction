@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
     if (operationType == 0)
     { // tarsau -a
-        printf("tarsau -a\n");
+
         FILE *arch, *file;
         DIR *dir;
         char *archive = argv[2];
@@ -62,10 +62,10 @@ int main(int argc, char **argv)
         dir = opendir(directory);
         if (dir == NULL)
         {
-            printf("Failed to open directory.\n");
+
             if (ENOENT == errno)
             {
-                printf("Directory does not exist. Creating directory.\n");
+
                 mkdir(directory, 0700);
             }
             else
@@ -102,7 +102,6 @@ int main(int argc, char **argv)
         int i = 0, addition;
         while (fscanf(arch, "|%[^,],%o,%d|", filename, &filepermission, &filesize) == 3)
         {
-            printf("%s", filename);
 
             // Create the full path for the file in the specified directory
             char fullpath[256];
@@ -169,7 +168,6 @@ int main(int argc, char **argv)
 
         // Create a archieve file and control the file arguments is there any problem about file number or file size
 
-        printf("tarsau -b\n");
         output_file = fopen(fileName, "w+");
         long headersize = 0;
         if (argc - 2 > MAX_FILES)
@@ -220,12 +218,11 @@ int main(int argc, char **argv)
 
                 // Read the contents of the file into the temporary buffer
                 size = fread(tmp, 1, buf.st_size, argument);
-                printf("size:%ld\n", size);
+
                 if (size > 0)
                 {
                     for (int j = 0; j < strlen(tmp); j++)       
                     {   // Checking if there is incompatible file format
-                        printf("%c",tmp[j]);
                         if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
                         {
                             fprintf(stderr, "Incompatible input file format: %s\n",argv[i]);
