@@ -182,7 +182,7 @@ int main(int argc, char **argv)
             exists = stat(argv[i], &buf);
             headersize += fprintf(output_file, "|%s,%04o,%ld|", argv[i], buf.st_mode & 0777, buf.st_size);
         }
-        headersize += 10;
+        headersize += 11;
         fprintf(output_file, "\n");
         rewind(output_file);
         fprintf(output_file, "%-10ld", headersize);
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
         }
 
         // Move the file position indicator in the output file to the position.
-        fseek(output_file, headersize + 1, SEEK_SET);
+        fseek(output_file, headersize, SEEK_SET);
         char *tmp;
 
         // Get into the files which was given as argument on command line.
@@ -215,12 +215,10 @@ int main(int argc, char **argv)
 
                 // Read the contents of the file into the temporary buffer
                 size = fread(tmp, 1, buf.st_size, argument);
-                printf("size:%ld\n", size);
                 if (size > 0)
                 {
                     for (int j = 0; j < size; j++)       
                     {   // Checking if there is incompatible file format
-                        printf("%c",tmp[j]);
                         if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
                         {
                             fprintf(stderr, "Incompatible input file format: %s\n",argv[i]);
