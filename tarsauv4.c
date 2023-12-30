@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     }
     else if (strcmp(argv[1], "-a") == 0)
     {
-        if (argc != 4)
+        if (argc < 3)
         {
             printf("Usage: %s -a archive.sau directory\n", argv[0]);
             exit(1);
@@ -55,9 +55,14 @@ int main(int argc, char **argv)
         FILE *arch, *file;
         DIR *dir;
         char *archive = argv[2];
-        char *directory = argv[3];
+        char *directory;
         char c;
-
+        if (argv[3] == NULL){
+            directory = ".";
+        }
+        else{
+            directory = argv[3];
+        }
         // Going over the output directory if it does not exist create the particular directory which was given argument by user
         dir = opendir(directory);
         if (dir == NULL)
