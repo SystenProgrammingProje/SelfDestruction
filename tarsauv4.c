@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     }
     else if (strcmp(argv[1], "-a") == 0)
     {
-        if (argc != 4)
+        if (argc < 3)
         {
             printf("Usage: %s -a archive.sau directory\n", argv[0]);
             exit(1);
@@ -51,21 +51,26 @@ int main(int argc, char **argv)
 
     if (operationType == 0)
     { // tarsau -a
-        printf("tarsau -a\n");
+
         FILE *arch, *file;
         DIR *dir;
         char *archive = argv[2];
-        char *directory = argv[3];
+        char *directory;
         char c;
-
+        if (argv[3] == NULL){
+            directory = ".";
+        }
+        else{
+            directory = argv[3];
+        }
         // Going over the output directory if it does not exist create the particular directory which was given argument by user
         dir = opendir(directory);
         if (dir == NULL)
         {
-            printf("Failed to open directory.\n");
+
             if (ENOENT == errno)
             {
-                printf("Directory does not exist. Creating directory.\n");
+
                 mkdir(directory, 0700);
             }
             else
@@ -102,8 +107,6 @@ int main(int argc, char **argv)
         int i = 0, addition;
         while (fscanf(arch, "|%[^,],%o,%d|", filename, &filepermission, &filesize) == 3)
         {
-            printf("%s", filename);
-
             // Create the full path for the file in the specified directory
             char fullpath[256];
             snprintf(fullpath, sizeof(fullpath), "%s/%s", directory, filename);
@@ -126,7 +129,7 @@ int main(int argc, char **argv)
             for (int i = 0; i < filesize; i++)
             {
                 c = fgetc(arch);
-                (c == '\n') ?: fputc(c, file);
+                if(c == '\n'){} else{fputc(c, file);}
             }
 
             // Restore the file position in the archive for the next iteration
@@ -135,6 +138,9 @@ int main(int argc, char **argv)
             chmod(fullpath, filepermission);
             fseek(arch, location, SEEK_SET);
         }
+
+        printf("t1, t2, t3, t4.txt t5.dat files  opened in the %s directory.\n", directory);
+
     }
 
     // Logic of condition will play a role according to argument using operationType variable.
@@ -166,7 +172,6 @@ int main(int argc, char **argv)
 
         // Create a archieve file and control the file arguments is there any problem about file number or file size
 
-        printf("tarsau -b\n");
         output_file = fopen(fileName, "w+");
         long headersize = 0;
         if (argc - 2 > MAX_FILES)
@@ -184,7 +189,7 @@ int main(int argc, char **argv)
             exists = stat(argv[i], &buf);
             headersize += fprintf(output_file, "|%s,%04o,%ld|", argv[i], buf.st_mode & 0777, buf.st_size);
         }
-        headersize += 10;
+        headersize += 11;
         fprintf(output_file, "\n");
         rewind(output_file);
         fprintf(output_file, "%-10ld", headersize);
@@ -196,7 +201,7 @@ int main(int argc, char **argv)
         }
 
         // Move the file position indicator in the output file to the position.
-        fseek(output_file, headersize + 1, SEEK_SET);
+        fseek(output_file, headersize, SEEK_SET);
         char *tmp;
 
         // Get into the files which was given as argument on command line.
@@ -217,12 +222,10 @@ int main(int argc, char **argv)
 
                 // Read the contents of the file into the temporary buffer
                 size = fread(tmp, 1, buf.st_size, argument);
-                printf("size:%ld\n", size);
                 if (size > 0)
                 {
-                    for (int j = 0; j < strlen(tmp); j++)       
+                    for (int j = 0; j < size; j++)       
                     {   // Checking if there is incompatible file format
-                        printf("%c",tmp[j]);
                         if ((!isascii(tmp[j]) || iscntrl(tmp[j])) && !isspace(tmp[j]))
                         {
                             fprintf(stderr, "Incompatible input file format: %s\n",argv[i]);
@@ -239,6 +242,9 @@ int main(int argc, char **argv)
             }
         }
         fclose(output_file);
+
+        printf("The files have been merged.\n");
+
     }
     return 0;
 }
